@@ -120,25 +120,31 @@ ax_comparacion.set_ylabel("Tiempo Promedio de Espera (min)")
 ax_comparacion.set_title("Comparación de tiempos de espera promedio por número de cajeros")
 st.pyplot(fig_comparacion)
 
-# Gráfico de evolución de la cola
-st.subheader("📈 Evolución de la cola durante la jornada")
-fig, ax = plt.subplots(figsize=(10, 4))
-resultados = resultados_comparacion[num_cajeros]
-ax.plot(resultados['longitud_cola_por_minuto'], label="Longitud de la cola")
-ax.set_xlabel("Minuto del día")
-ax.set_ylabel("Clientes en cola")
-ax.set_title("Evolución de la cola durante la jornada")
-ax.grid(True)
-st.pyplot(fig)
+# Gráfico de comparación de la evolución de la cola
+st.subheader("📈 Comparación de la evolución de la cola")
+fig_evolucion, ax_evolucion = plt.subplots(figsize=(10, 5))
+for cajeros_opcion, resultados in resultados_comparacion.items():
+    ax_evolucion.plot(resultados['longitud_cola_por_minuto'], label=f"{cajeros_opcion} cajeros")
 
-# Histograma de tiempos de espera
-st.subheader("⏳ Distribución del tiempo de espera")
-fig2, ax2 = plt.subplots(figsize=(8, 4))
-ax2.hist(resultados['tiempos_espera'], bins=range(0, max(resultados['tiempos_espera'])+2), color="skyblue", edgecolor="black")
-ax2.set_xlabel("Tiempo de espera (min)")
-ax2.set_ylabel("Número de clientes")
-ax2.set_title("Distribución de los tiempos de espera")
-ax2.grid(True)
-st.pyplot(fig2)
+ax_evolucion.set_xlabel("Minuto del día")
+ax_evolucion.set_ylabel("Clientes en cola")
+ax_evolucion.set_title("Evolución de la cola con diferentes números de cajeros")
+ax_evolucion.legend(title="Número de cajeros")
+ax_evolucion.grid(True)
+st.pyplot(fig_evolucion)
+
+# Histograma de comparación de tiempos de espera
+st.subheader("⏳ Comparación de la distribución del tiempo de espera")
+fig_histograma, ax_histograma = plt.subplots(figsize=(8, 5))
+for cajeros_opcion, resultados in resultados_comparacion.items():
+    ax_histograma.hist(resultados['tiempos_espera'], bins=range(0, max(resultados['tiempos_espera'])+2), 
+                       alpha=0.5, label=f"{cajeros_opcion} cajeros", edgecolor="black")
+
+ax_histograma.set_xlabel("Tiempo de espera (min)")
+ax_histograma.set_ylabel("Número de clientes")
+ax_histograma.set_title("Distribución de tiempos de espera por número de cajeros")
+ax_histograma.legend(title="Número de cajeros")
+ax_histograma.grid(True)
+st.pyplot(fig_histograma)
 
 
