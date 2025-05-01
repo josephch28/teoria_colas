@@ -87,17 +87,21 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
         'tiempos_espera': tiempos_espera
     }
 
-# Inicializar sesión de resultados
+# Inicializar session state para los resultados
 if 'resultados_comparacion' not in st.session_state:
     st.session_state.resultados_comparacion = {}
 
-# Función para borrar los resultados antiguos y recalcular
-def reiniciar_simulacion():
+# Borrar resultados si cambian los sliders
+def borrar_resultados():
     st.session_state.resultados_comparacion = {}
 
-# Reiniciar simulación si cambian los parámetros
-if st.button("🔄 Reiniciar Simulación"):
-    reiniciar_simulacion()
+# Escucha cambios en los sliders y borra los resultados antiguos si cambian
+if st.slider("⏱ Tiempo total de la jornada (min)", 60, 720, 480, step=30) != tiempo_total or \
+   st.slider("👥 Tasa de llegada por minuto", 0.05, 1.0, 0.5, step=0.05) != tasa_llegada or \
+   st.slider("💼 Número de cajeros", 1, 10, 4) != num_cajeros or \
+   st.slider("🔧 Tiempo mínimo de servicio (min)", 1, 10, 2) != tiempo_min_servicio or \
+   st.slider("🔧 Tiempo máximo de servicio (min)", 5, 20, 10) != tiempo_max_servicio:
+    borrar_resultados()
 
 # Comparación de diferentes escenarios
 st.subheader("🔍 Comparación de Escenarios")
@@ -159,6 +163,7 @@ ax_histograma.set_title("Distribución de tiempos de espera por número de cajer
 ax_histograma.legend(title="Número de cajeros")
 ax_histograma.grid(True)
 st.pyplot(fig_histograma)
+
 
 
 
