@@ -91,6 +91,14 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
 if 'resultados_comparacion' not in st.session_state:
     st.session_state.resultados_comparacion = {}
 
+# Función para borrar los resultados antiguos y recalcular
+def reiniciar_simulacion():
+    st.session_state.resultados_comparacion = {}
+
+# Reiniciar simulación si cambian los parámetros
+if st.button("🔄 Reiniciar Simulación"):
+    reiniciar_simulacion()
+
 # Comparación de diferentes escenarios
 st.subheader("🔍 Comparación de Escenarios")
 num_cajeros_opciones = st.multiselect("📊 Selecciona diferentes números de cajeros", range(1, 11), default=[num_cajeros])
