@@ -26,6 +26,7 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
             self.ocupado = False
             self.cliente_actual = None
             self.tiempo_restante = 0
+            self.total_ocupado = 0  # Total de tiempo que estuvo ocupado
 
         def atender(self, cliente, tiempo_actual):
             self.cliente_actual = cliente
@@ -36,6 +37,7 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
         def avanzar_tiempo(self, tiempo_actual):
             if self.ocupado:
                 self.tiempo_restante -= 1
+                self.total_ocupado += 1
                 if self.tiempo_restante <= 0:
                     self.cliente_actual.fin_servicio = tiempo_actual
                     cliente_atendidos.append(self.cliente_actual)
@@ -68,8 +70,22 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
     tiempo_prom_espera = np.mean(tiempos_espera) if tiempos_espera else 0
     tiempo_max_espera = np.max(tiempos_espera) if tiempos_espera else 0
     tiempo_prom_servicio = np.mean([c.tiempo_servicio for c in cliente_atendidos]) if cliente_atendidos else 0
+    total_ocupado_cajeros = sum([cajero.total_ocupado for cajero in cajeros])  # Total de tiempo ocupado por los cajeros
+    clientes_en_cola_final = len(fila)  # Clientes restantes en la cola al final de la jornada
+    tiempo_max_servicio = np.max([c.tiempo_servicio for c in cliente_atendidos]) if cliente_atendidos else 0
 
-    return tiempo_prom_espera, tiempo_max_espera, tiempo_prom_servicio, longitud_cola_por_minuto, tiempos_espera
+    # Resultados
+    return {
+        'total_atendidos': total_atendidos,
+        'tiempo_prom_espera': tiempo_prom_espera,
+        'tiempo_max_espera': tiempo_max_espera,
+        'tiempo_prom_servicio': tiempo_prom_servicio,
+        'total_ocupado_cajeros': total_ocupado_cajeros,
+        'clientes_en_cola_final': clientes_en_cola_final,
+        'tiempo_max_servicio': tiempo_max_servicio,
+        'longitud_cola_por_minuto': longitud_cola_por_minuto,
+        'tiempos_espera': tiempos_espera
+    }
 
 # Comparación de diferentes escenarios
 st.subheader("🔍 Comparación de Escenarios")
@@ -77,19 +93,28 @@ num_cajeros_opciones = st.multiselect("📊 Selecciona diferentes números de ca
 resultados_comparacion = {}
 
 for cajeros_opcion in num_cajeros_opciones:
-    tiempo_prom_espera, tiempo_max_espera, tiempo_prom_servicio, _, _ = simular_cola(
+    resultados_comparacion[cajeros_opcion] = simular_cola(
         tiempo_total, tasa_llegada, cajeros_opcion, tiempo_min_servicio, tiempo_max_servicio)
-    resultados_comparacion[cajeros_opcion] = tiempo_prom_espera
 
 # Mostrar resultados de comparación
 st.subheader("📋 Resultados de la comparación")
-for cajeros_opcion, tiempo in resultados_comparacion.items():
-    st.write(f"Con {cajeros_opcion} cajeros, el tiempo promedio de espera es: **{tiempo:.2f} minutos**")
+for cajeros_opcion, resultados in resultados_comparacion.items():
+    st.write(f"### Con {cajeros_opcion} cajeros:")
+    st.write(f"🔹 Clientes atendidos: **{resultados['total_atendidos']}**")
+    st.write(f"🔹 Tiempo promedio de espera: **{resultados['tiempo_prom_espera']:.2f} min**")
+    st.write(f"🔹 Tiempo máximo de espera: **{resultados['tiempo_max_espera']} min**")
+    st.write(f"🔹 Tiempo promedio de servicio: **{resultados['tiempo_prom_servicio']:.2f} min**")
+    st.write(f"🔹 Tiempo total de ocupación de los cajeros: **{resultados['total_ocupado_cajeros']} min**")
+    st.write(f"🔹 Clientes en cola al final de la jornada: **{resultados['clientes_en_cola_final']}**")
+    st.write(f"🔹 Tiempo máximo de servicio: **{resultados['tiempo_max_servicio']} min**")
+    st.write("-----")
 
 # Gráfico de comparación de tiempos promedio de espera por número de cajeros
 st.subheader("📈 Comparación de tiempos de espera promedio")
 fig_comparacion, ax_comparacion = plt.subplots(figsize=(10, 5))
-ax_comparacion.bar(resultados_comparacion.keys(), resultados_comparacion.values(), color='skyblue')
+ax_comparacion.bar(resultados_comparacion.keys(), 
+                   [resultados['tiempo_prom_espera'] for resultados in resultados_comparacion.values()], 
+                   color='skyblue')
 ax_comparacion.set_xlabel("Número de Cajeros")
 ax_comparacion.set_ylabel("Tiempo Promedio de Espera (min)")
 ax_comparacion.set_title("Comparación de tiempos de espera promedio por número de cajeros")
@@ -98,9 +123,8 @@ st.pyplot(fig_comparacion)
 # Gráfico de evolución de la cola
 st.subheader("📈 Evolución de la cola durante la jornada")
 fig, ax = plt.subplots(figsize=(10, 4))
-_, _, _, longitud_cola_por_minuto, _ = simular_cola(
-    tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, tiempo_max_servicio)
-ax.plot(longitud_cola_por_minuto, label="Longitud de la cola")
+resultados = resultados_comparacion[num_cajeros]
+ax.plot(resultados['longitud_cola_por_minuto'], label="Longitud de la cola")
 ax.set_xlabel("Minuto del día")
 ax.set_ylabel("Clientes en cola")
 ax.set_title("Evolución de la cola durante la jornada")
@@ -109,10 +133,8 @@ st.pyplot(fig)
 
 # Histograma de tiempos de espera
 st.subheader("⏳ Distribución del tiempo de espera")
-_, _, _, _, tiempos_espera = simular_cola(
-    tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, tiempo_max_servicio)
 fig2, ax2 = plt.subplots(figsize=(8, 4))
-ax2.hist(tiempos_espera, bins=range(0, max(tiempos_espera)+2), color="skyblue", edgecolor="black")
+ax2.hist(resultados['tiempos_espera'], bins=range(0, max(resultados['tiempos_espera'])+2), color="skyblue", edgecolor="black")
 ax2.set_xlabel("Tiempo de espera (min)")
 ax2.set_ylabel("Número de clientes")
 ax2.set_title("Distribución de los tiempos de espera")
