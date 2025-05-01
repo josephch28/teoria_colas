@@ -12,6 +12,10 @@ num_cajeros = st.slider("💼 Número de cajeros", 1, 10, 4)
 tiempo_min_servicio = st.slider("🔧 Tiempo mínimo de servicio (min)", 1, 10, 2)
 tiempo_max_servicio = st.slider("🔧 Tiempo máximo de servicio (min)", 5, 20, 10)
 
+# Inicialización de la sesión de resultados si no existe
+if 'resultados_comparacion' not in st.session_state:
+    st.session_state.resultados_comparacion = {}
+
 # Función para realizar simulación de colas
 def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, tiempo_max_servicio):
     class Cliente:
@@ -87,19 +91,18 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
         'tiempos_espera': tiempos_espera
     }
 
-# Almacenamos los resultados previos en session_state
-if 'resultados_comparacion' not in st.session_state:
-    st.session_state.resultados_comparacion = {}
-
 # Comparación de diferentes escenarios
 st.subheader("🔍 Comparación de Escenarios")
 num_cajeros_opciones = st.multiselect("📊 Selecciona diferentes números de cajeros", range(1, 11), default=[num_cajeros])
 
-# Si no existen resultados previos o se cambian las opciones, se recalculan los resultados
-for cajeros_opcion in num_cajeros_opciones:
-    if cajeros_opcion not in st.session_state.resultados_comparacion:
+# Solo borrar y recalcular resultados si se cambia la selección de cajeros
+if 'num_cajeros_opciones' not in st.session_state or st.session_state.num_cajeros_opciones != num_cajeros_opciones:
+    st.session_state.resultados_comparacion = {}
+    for cajeros_opcion in num_cajeros_opciones:
         st.session_state.resultados_comparacion[cajeros_opcion] = simular_cola(
             tiempo_total, tasa_llegada, cajeros_opcion, tiempo_min_servicio, tiempo_max_servicio)
+    
+    st.session_state.num_cajeros_opciones = num_cajeros_opciones
 
 # Mostrar resultados de comparación
 st.subheader("📋 Resultados de la comparación")
@@ -117,8 +120,8 @@ for cajeros_opcion, resultados in st.session_state.resultados_comparacion.items(
 # Gráfico de comparación de tiempos promedio de espera por número de cajeros
 st.subheader("📈 Comparación de tiempos de espera promedio")
 fig_comparacion, ax_comparacion = plt.subplots(figsize=(10, 5))
-ax_comparacion.bar(st.session_state.resultados_comparacion.keys(),
-                   [resultados['tiempo_prom_espera'] for resultados in st.session_state.resultados_comparacion.values()],
+ax_comparacion.bar(st.session_state.resultados_comparacion.keys(), 
+                   [resultados['tiempo_prom_espera'] for resultados in st.session_state.resultados_comparacion.values()], 
                    color='skyblue')
 ax_comparacion.set_xlabel("Número de Cajeros")
 ax_comparacion.set_ylabel("Tiempo Promedio de Espera (min)")
@@ -142,7 +145,7 @@ st.pyplot(fig_evolucion)
 st.subheader("⏳ Comparación de la distribución del tiempo de espera")
 fig_histograma, ax_histograma = plt.subplots(figsize=(8, 5))
 for cajeros_opcion, resultados in st.session_state.resultados_comparacion.items():
-    ax_histograma.hist(resultados['tiempos_espera'], bins=range(0, max(resultados['tiempos_espera'])+2),
+    ax_histograma.hist(resultados['tiempos_espera'], bins=range(0, max(resultados['tiempos_espera'])+2), 
                        alpha=0.5, label=f"{cajeros_opcion} cajeros", edgecolor="black")
 
 ax_histograma.set_xlabel("Tiempo de espera (min)")
@@ -151,6 +154,7 @@ ax_histograma.set_title("Distribución de tiempos de espera por número de cajer
 ax_histograma.legend(title="Número de cajeros")
 ax_histograma.grid(True)
 st.pyplot(fig_histograma)
+
 
 
 
