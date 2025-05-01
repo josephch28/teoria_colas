@@ -5,12 +5,16 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Simulación de Colas", layout="centered")
 st.title("📊 Simulación de colas en un banco")
 
+# Inicializar session_state para los resultados
+if 'resultados_comparacion' not in st.session_state:
+    st.session_state.resultados_comparacion = {}
+
 # Parámetros de entrada interactivos
-tiempo_total = st.slider("⏱ Tiempo total de la jornada (min)", 60, 720, 480, step=30)
-tasa_llegada = st.slider("👥 Tasa de llegada por minuto", 0.05, 1.0, 0.5, step=0.05)
-num_cajeros = st.slider("💼 Número de cajeros", 1, 10, 4)
-tiempo_min_servicio = st.slider("🔧 Tiempo mínimo de servicio (min)", 1, 10, 2)
-tiempo_max_servicio = st.slider("🔧 Tiempo máximo de servicio (min)", 5, 20, 10)
+tiempo_total = st.slider("⏱ Tiempo total de la jornada (min)", 60, 720, 480, step=30, key="tiempo_total")
+tasa_llegada = st.slider("👥 Tasa de llegada por minuto", 0.05, 1.0, 0.5, step=0.05, key="tasa_llegada")
+num_cajeros = st.slider("💼 Número de cajeros", 1, 10, 4, key="num_cajeros")
+tiempo_min_servicio = st.slider("🔧 Tiempo mínimo de servicio (min)", 1, 10, 2, key="tiempo_min_servicio")
+tiempo_max_servicio = st.slider("🔧 Tiempo máximo de servicio (min)", 5, 20, 10, key="tiempo_max_servicio")
 
 # Función para realizar simulación de colas
 def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, tiempo_max_servicio):
@@ -87,21 +91,13 @@ def simular_cola(tiempo_total, tasa_llegada, num_cajeros, tiempo_min_servicio, t
         'tiempos_espera': tiempos_espera
     }
 
-# Inicializar session state para los resultados
-if 'resultados_comparacion' not in st.session_state:
-    st.session_state.resultados_comparacion = {}
-
-# Borrar resultados si cambian los sliders
+# Borrar resultados cuando los sliders cambian
 def borrar_resultados():
     st.session_state.resultados_comparacion = {}
 
-# Escucha cambios en los sliders y borra los resultados antiguos si cambian
-if st.slider("⏱ Tiempo total de la jornada (min)", 60, 720, 480, step=30) != tiempo_total or \
-   st.slider("👥 Tasa de llegada por minuto", 0.05, 1.0, 0.5, step=0.05) != tasa_llegada or \
-   st.slider("💼 Número de cajeros", 1, 10, 4) != num_cajeros or \
-   st.slider("🔧 Tiempo mínimo de servicio (min)", 1, 10, 2) != tiempo_min_servicio or \
-   st.slider("🔧 Tiempo máximo de servicio (min)", 5, 20, 10) != tiempo_max_servicio:
-    borrar_resultados()
+# Inicializar los resultados cuando se hace una simulación con nuevos parámetros
+if 'resultados_comparacion' not in st.session_state:
+    st.session_state.resultados_comparacion = {}
 
 # Comparación de diferentes escenarios
 st.subheader("🔍 Comparación de Escenarios")
@@ -150,18 +146,16 @@ ax_evolucion.legend(title="Número de cajeros")
 ax_evolucion.grid(True)
 st.pyplot(fig_evolucion)
 
-# Histograma de comparación de tiempos de espera
-st.subheader("⏳ Comparación de la distribución del tiempo de espera")
-fig_histograma, ax_histograma = plt.subplots(figsize=(8, 5))
+# Gráfico de comparación de la distribución de tiempos de espera
+st.subheader("⏳ Comparación de la distribución de los tiempos de espera")
+fig_histograma, ax_histograma = plt.subplots(figsize=(10, 5))
 for cajeros_opcion, resultados in st.session_state.resultados_comparacion.items():
-    ax_histograma.hist(resultados['tiempos_espera'], bins=range(0, max(resultados['tiempos_espera'])+2), 
-                       alpha=0.5, label=f"{cajeros_opcion} cajeros", edgecolor="black")
+    ax_histograma.hist(resultados['tiempos_espera'], bins=20, alpha=0.5, label=f"{cajeros_opcion} cajeros")
 
 ax_histograma.set_xlabel("Tiempo de espera (min)")
-ax_histograma.set_ylabel("Número de clientes")
-ax_histograma.set_title("Distribución de tiempos de espera por número de cajeros")
+ax_histograma.set_ylabel("Clientes")
+ax_histograma.set_title("Distribución de los tiempos de espera con diferentes números de cajeros")
 ax_histograma.legend(title="Número de cajeros")
-ax_histograma.grid(True)
 st.pyplot(fig_histograma)
 
 
